@@ -35,6 +35,7 @@ namespace DID_Player
 
             listBox1.DragEnter += listBox1_DragEnter;
             listBox1.DragDrop += listBox1_DragDrop;
+            listBox1.KeyDown += ListBox1_KeyDown;
             listBox1.SelectedIndexChanged += listBox1_SelectedIndexChanged;
 
             timer1.Tick += Timer1_Tick;
@@ -42,10 +43,12 @@ namespace DID_Player
 
         private void Timer1_Tick(object sender, EventArgs e)
         {
+            // 순차적
             if (comboBox1.SelectedIndex == 0)
             {
                 showImage();
             }
+            // 랜덤
             else
             {
                 Random random = new Random();
@@ -53,7 +56,6 @@ namespace DID_Player
                 showImage();
             }
         }
-
 
         // 리스트박스 인덱스가 바뀔때 미리보기를 할 수 있다.
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -84,7 +86,7 @@ namespace DID_Player
                     }
                     else
                     {
-                        e.Effect = DragDropEffects.None; // 이미지 파일이 아닌 경우 드롭 금지
+                        e.Effect = DragDropEffects.None; // 이미지 파일이 아닌 경우 드롭x
                         return;
                     }
                 }
@@ -102,6 +104,22 @@ namespace DID_Player
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
                 addImage(files);
             }
+        }
+
+        // Del 키로 리스트 제외
+        private void ListBox1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(listBox1.SelectedItems.Count > 0)
+            {
+                if (e.KeyCode == Keys.Delete)
+                {
+                    string itemPath = listBox1.SelectedItem.ToString();
+                    listBox1.Items.Remove(itemPath);
+                    images.Remove(itemPath);
+                }
+            }
+            string totalCount = listBox1.Items.Count.ToString();
+            label4.Text = $"Total : {totalCount}";
         }
 
         // 추가
@@ -156,7 +174,7 @@ namespace DID_Player
         private void Button5_Click(object sender, EventArgs e)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "JSON 파일|*.json";
+            saveFileDialog.Filter = "JSON |*.json";
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 try
@@ -174,8 +192,10 @@ namespace DID_Player
         // 불러오기
         private void Button6_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "JSON 파일|*.json";
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "JSON |*.json"
+            };
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
                 if (listBox1.Items.Count != 0)
@@ -233,6 +253,7 @@ namespace DID_Player
                     }
                 }
                 listBox1.SelectedIndex = 0;         // 이미지 추가후 미리보기를 위해 0번 인덱스 셀렉트
+
                 string totalCount = listBox1.Items.Count.ToString();
                 label4.Text = $"Total : {totalCount}";
             }
@@ -267,7 +288,8 @@ namespace DID_Player
 #else
                 WindowState = FormWindowState.Maximized,
 #endif                
-                TopMost = true
+                TopMost = true,
+                KeyPreview = true,
             };
 
             pictureBox = new PictureBox
@@ -279,16 +301,14 @@ namespace DID_Player
             currentIndex++;
 
             fullScreen.Controls.Add(pictureBox);
-            fullScreen.KeyPreview = true;
             fullScreen.Show();
-            Cursor.Hide();
-
             fullScreen.KeyDown += FullScreen_KeyDown;
+
             pictureBox.MouseClick += PictureBox_LeftClick;
-            //pictureBox.MouseClick += PictureBox_RightClick;
 
             timer1.Interval = (int)numericUpDown1.Value * 1000;
             timer1.Start();
+            Cursor.Hide();
         }
 
 
@@ -330,8 +350,8 @@ namespace DID_Player
             }
             else
             {
-                Cursor.Hide();
                 timer1.Start();
+                Cursor.Hide();
             }
         }
     }
