@@ -12,6 +12,7 @@ namespace DID_Player
     {
         private Form fullScreen = null;
         private PictureBox pictureBox = null;
+        private SettingForm settingForm = null;
         private int currentIndex = 0;
 
         Dictionary<string, Image> images = new Dictionary<string, Image>();
@@ -19,11 +20,12 @@ namespace DID_Player
         public MainForm()
         {
             InitializeComponent();
-            initEvent();
+            regEvent();
+            setListboxCount();
             comboBox1.SelectedIndex = 0;
         }
 
-        private void initEvent()
+        private void regEvent()
         {
             button1.Click += Button1_Click;   // 파일 추가
             button2.Click += Button2_Click;   // 선택 삭제
@@ -39,6 +41,37 @@ namespace DID_Player
             listBox1.SelectedIndexChanged += listBox1_SelectedIndexChanged;
 
             timer1.Tick += Timer1_Tick;
+
+            toolStripMenuItem1.Click += ToolStripMenuItem1_Click;
+            toolStripMenuItem2.Click += ToolStripMenuItem2_Click;
+        }
+
+        // 풀스크린에서의 설정 메뉴 (마우스 우클)
+        private void ToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            timer1.Stop();
+            Cursor.Show();
+
+            settingForm = new SettingForm(this);
+            settingForm.Show();
+        }
+
+        // 풀스크린에서의 종료 메뉴 (마우스 우클)
+        private void ToolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            closeFullScreen();
+        }
+
+        // SettingForm 의 값을 전달 받는 메서드
+        public void UpdateValues(decimal numericUpDownValue, int comboBoxValue)
+        {
+            if (numericUpDownValue >= 1 && comboBoxValue != -1)
+            {
+                numericUpDown1.Value = numericUpDownValue;
+                comboBox1.SelectedIndex = comboBoxValue;
+                timer1.Interval = (int)numericUpDownValue * 1000;
+                timer1.Start();
+            }
         }
 
         private void Timer1_Tick(object sender, EventArgs e)
@@ -102,24 +135,18 @@ namespace DID_Player
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                addImage(files);
+                addImages(files);
             }
         }
 
         // Del 키로 리스트 제외
         private void ListBox1_KeyDown(object sender, KeyEventArgs e)
         {
-            if(listBox1.SelectedItems.Count > 0)
+            if (e.KeyCode == Keys.Delete)
             {
-                if (e.KeyCode == Keys.Delete)
-                {
-                    string itemPath = listBox1.SelectedItem.ToString();
-                    listBox1.Items.Remove(itemPath);
-                    images.Remove(itemPath);
-                }
+                removeImage();
             }
-            string totalCount = listBox1.Items.Count.ToString();
-            label4.Text = $"Total : {totalCount}";
+            setListboxCount();
         }
 
         // 추가
@@ -130,36 +157,33 @@ namespace DID_Player
             openFileDialog.Filter = "Image Files | *.jpg;*png;*.jpeg;*.bmp";
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                addImage(openFileDialog.FileNames);
+                addImages(openFileDialog.FileNames);
             }
         }
 
         // 리스트 제외
         private void Button2_Click(object sender, EventArgs e)
         {
-            if (listBox1.SelectedIndex != 1)
-            {
-                string itemPath = listBox1.SelectedItem.ToString();
-                listBox1.Items.Remove(itemPath);
-                images.Remove(itemPath);
-            }
-            string totalCount = listBox1.Items.Count.ToString();
-            label4.Text = $"Total : {totalCount}";
+            removeImage();
+            setListboxCount();
         }
 
         // 슬라이드쇼 시작
         private void Button3_Click(object sender, EventArgs e)
         {
+
             currentIndex = 0;
             if (listBox1.Items.Count == 0) return;
             if (fullScreen == null && pictureBox == null)
             {
+                this.Hide();
                 setFullScreen();
             }
             else
             {
                 fullScreen = null;
                 pictureBox = null;
+                this.Hide();
                 setFullScreen();
             }
         }
@@ -173,8 +197,10 @@ namespace DID_Player
         // 저장
         private void Button5_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "JSON |*.json";
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "JSON |*.json"
+            };
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 try
@@ -208,7 +234,7 @@ namespace DID_Player
                     string json = File.ReadAllText(openFileDialog.FileName);
                     List<string> files = JsonConvert.DeserializeObject<List<string>>(json);
 
-                    addImage(files.ToArray());
+                    addImages(files.ToArray());
                 }
                 catch (Exception ex)
                 {
@@ -217,6 +243,7 @@ namespace DID_Player
             }
         }
 
+        // 초기화
         private void Button7_Click(object sender, EventArgs e)
         {
             if (listBox1.Items.Count != 0)
@@ -225,46 +252,17 @@ namespace DID_Player
                 images.Clear();
                 pictureBox1.Image = null;
             }
-            string totalCount = listBox1.Items.Count.ToString();
-            label4.Text = $"Total : {totalCount}";
+            setListboxCount();
         }
 
-        // 추가된 이미지를 리스트박스와 딕셔너리에 추가하는 메서드
-        private void addImage(string[] files)
-        {
-            // 파일 배열이 null이 아니고 최소한 하나의 파일을 포함하고 있는지 확인 (length 로 확인)
-            if (files != null && files.Length > 0)
-            {
-                foreach (string file in files)
-                {
-                    // 파일이 이미 딕셔너리에 없는지 확인
-                    if (!images.ContainsKey(file))
-                    {
-                        try
-                        {
-                            Image img = Image.FromFile(file);           // 파일로부터 이미지를 로드
-                            images.Add(file, img);                           // 이미지를 파일 경로를 키로하여 딕셔너리에 추가
-                            listBox1.Items.Add(file);                         // 파일 경로를 리스트 박스에 추가
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"오류: {ex.Message}", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                }
-                listBox1.SelectedIndex = 0;         // 이미지 추가후 미리보기를 위해 0번 인덱스 셀렉트
 
-                string totalCount = listBox1.Items.Count.ToString();
-                label4.Text = $"Total : {totalCount}";
-            }
-        }
 
         // ESC 키 슬라이드쇼 종료 이벤트
         private void FullScreen_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Escape)
             {
-                fullScreenClose();
+                closeFullScreen();
             }
         }
 
@@ -273,13 +271,30 @@ namespace DID_Player
         {
             if (e.Button == MouseButtons.Left)
             {
-                fullScreenClose();
+                closeFullScreen();
+            }
+        }
+
+        private void PictureBox_RightClick(object sender, MouseEventArgs e)
+        {
+            Cursor.Show();
+            if (e.Button == MouseButtons.Right)
+            {
+                contextMenuStrip1.Show(Cursor.Position);
             }
         }
 
         // 풀스크린 실행 메서드
         private void setFullScreen()
         {
+            if (fullScreen != null)
+            {
+                fullScreen = null;
+            }
+            if (pictureBox != null)
+            {
+                pictureBox = null;
+            }
             fullScreen = new Form
             {
                 FormBorderStyle = FormBorderStyle.None,
@@ -305,32 +320,19 @@ namespace DID_Player
             fullScreen.KeyDown += FullScreen_KeyDown;
 
             pictureBox.MouseClick += PictureBox_LeftClick;
+            pictureBox.MouseClick += PictureBox_RightClick;
 
             timer1.Interval = (int)numericUpDown1.Value * 1000;
             timer1.Start();
             Cursor.Hide();
         }
 
-
-        // 인덱스에 따른 이미지 표시를 위한 메서드
-        private void showImage()
-        {
-            if (currentIndex >= listBox1.Items.Count)
-            {
-                currentIndex = 0;
-            }
-            string imagePath = listBox1.Items[currentIndex].ToString();
-
-            pictureBox.Image = images[imagePath];
-            currentIndex++;
-        }
-
         // 풀스크린 종료 메서드
-        private void fullScreenClose()
+        private void closeFullScreen()
         {
             timer1.Stop();
             Cursor.Show();
-            if (DialogResult.Yes == MessageBox.Show("종료 하시겠습니까?", "알림", MessageBoxButtons.YesNo, MessageBoxIcon.Question))
+            if (DialogResult.Yes == MessageBox.Show("슬라이드쇼를 종료 하시겠습니까?", "알림", MessageBoxButtons.YesNo, MessageBoxIcon.Question))
             {
                 if (currentIndex != 0)
                 {
@@ -352,6 +354,78 @@ namespace DID_Player
             {
                 timer1.Start();
                 Cursor.Hide();
+            }
+        }
+
+
+        // 인덱스에 따른 이미지 표시를 위한 메서드
+        private void showImage()
+        {
+            if (currentIndex >= listBox1.Items.Count)
+            {
+                currentIndex = 0;
+            }
+            string imagePath = listBox1.Items[currentIndex].ToString();
+
+            pictureBox.Image = images[imagePath];
+            currentIndex++;
+        }
+
+        // 추가된 이미지를 리스트박스와 딕셔너리에 추가하는 메서드
+        private void addImages(string[] files)
+        {
+            // 파일 배열이 null이 아니고 최소한 하나의 파일을 포함하고 있는지 확인
+            if (files != null && files.Length > 0)
+            {
+                foreach (string file in files)
+                {
+                    // 파일이 이미 딕셔너리에 없는지 확인
+                    if (!images.ContainsKey(file))
+                    {
+                        try
+                        {
+                            Image img = Image.FromFile(file);           // 파일로부터 이미지를 로드
+                            images.Add(file, img);                           // 이미지를 파일 경로를 키로하여 딕셔너리에 추가
+                            listBox1.Items.Add(file);                         // 파일 경로를 리스트 박스에 추가
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"오류: {ex.Message}", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                listBox1.SelectedIndex = 0;         // 이미지 추가후 미리보기를 위해 리스트박스의 0번 인덱스 셀렉트
+                setListboxCount();
+            }
+        }
+
+        // 리스트 제외를 위한 메서드
+        private void removeImage()
+        {
+            if (listBox1.SelectedItem != null)
+            {
+                string itemPath = listBox1.SelectedItem.ToString();
+                listBox1.Items.Remove(itemPath);
+                images[itemPath].Dispose();
+                images.Remove(itemPath);
+            }
+            else
+            {
+                MessageBox.Show("먼저 제외할 아이템을 선택해 주세요", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        // 리스트 박스에 추가된 이미지 갯수 카운팅을 위한 메서드
+        private void setListboxCount()
+        {
+            if (listBox1.Items.Count != 0)
+            {
+                string totalCount = listBox1.Items.Count.ToString();
+                label4.Text = $"Total : {totalCount}";
+            }
+            else
+            {
+                label4.Text = $"Total : 0";
             }
         }
     }
