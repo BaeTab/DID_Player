@@ -88,14 +88,14 @@
             this.comboBox1.Location = new System.Drawing.Point(129, 58);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(90, 20);
-            this.comboBox1.TabIndex = 11;
+            this.comboBox1.TabIndex = 2;
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(143, 97);
+            this.button1.Location = new System.Drawing.Point(82, 97);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 12;
+            this.button1.TabIndex = 3;
             this.button1.Text = "적용";
             this.button1.UseVisualStyleBackColor = true;
             // 

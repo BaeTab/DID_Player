@@ -171,7 +171,6 @@ namespace DID_Player
         // 슬라이드쇼 시작
         private void Button3_Click(object sender, EventArgs e)
         {
-
             currentIndex = 0;
             if (listBox1.Items.Count == 0) return;
             if (fullScreen == null && pictureBox == null)
@@ -191,7 +190,10 @@ namespace DID_Player
         // 종료
         private void Button4_Click(object sender, EventArgs e)
         {
-            Close();
+            if(DialogResult.Yes == MessageBox.Show("프로그램을 종료 하시겠습니까?", "알림", MessageBoxButtons.YesNo, MessageBoxIcon.Question))
+            {
+                Close();
+            }
         }
 
         // 저장
@@ -255,35 +257,6 @@ namespace DID_Player
             setListboxCount();
         }
 
-
-
-        // ESC 키 슬라이드쇼 종료 이벤트
-        private void FullScreen_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Escape)
-            {
-                closeFullScreen();
-            }
-        }
-
-        // 좌클릭시 슬라이드쇼 종료 이벤트
-        private void PictureBox_LeftClick(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                closeFullScreen();
-            }
-        }
-
-        private void PictureBox_RightClick(object sender, MouseEventArgs e)
-        {
-            Cursor.Show();
-            if (e.Button == MouseButtons.Right)
-            {
-                contextMenuStrip1.Show(Cursor.Position);
-            }
-        }
-
         // 풀스크린 실행 메서드
         private void setFullScreen()
         {
@@ -327,6 +300,33 @@ namespace DID_Player
             Cursor.Hide();
         }
 
+        // ESC 키 슬라이드쇼 종료 이벤트
+        private void FullScreen_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                closeFullScreen();
+            }
+        }
+
+        // 좌클릭시 슬라이드쇼 종료 이벤트
+        private void PictureBox_LeftClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                closeFullScreen();
+            }
+        }
+
+        private void PictureBox_RightClick(object sender, MouseEventArgs e)
+        {
+            Cursor.Show();
+            if (e.Button == MouseButtons.Right)
+            {
+                contextMenuStrip1.Show(Cursor.Position);
+            }
+        }
+
         // 풀스크린 종료 메서드
         private void closeFullScreen()
         {
@@ -356,7 +356,6 @@ namespace DID_Player
                 Cursor.Hide();
             }
         }
-
 
         // 인덱스에 따른 이미지 표시를 위한 메서드
         private void showImage()
