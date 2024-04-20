@@ -12,7 +12,6 @@ namespace DID_Player
     {
         private Form fullScreen = null;
         private PictureBox pictureBox = null;
-        private SettingForm settingForm = null;
         private int currentIndex = 0;
 
         Dictionary<string, Image> images = new Dictionary<string, Image>();
@@ -41,37 +40,12 @@ namespace DID_Player
             listBox1.SelectedIndexChanged += listBox1_SelectedIndexChanged;
 
             timer1.Tick += Timer1_Tick;
-
-            toolStripMenuItem1.Click += ToolStripMenuItem1_Click;
-            toolStripMenuItem2.Click += ToolStripMenuItem2_Click;
-        }
-
-        // 풀스크린에서의 설정 메뉴 (마우스 우클)
-        private void ToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            timer1.Stop();
-            Cursor.Show();
-
-            settingForm = new SettingForm(this);
-            settingForm.Show();
         }
 
         // 풀스크린에서의 종료 메뉴 (마우스 우클)
         private void ToolStripMenuItem2_Click(object sender, EventArgs e)
         {
             closeFullScreen();
-        }
-
-        // SettingForm 의 값을 전달 받는 메서드
-        public void UpdateValues(decimal numericUpDownValue, int comboBoxValue)
-        {
-            if (numericUpDownValue >= 1 && comboBoxValue != -1)
-            {
-                numericUpDown1.Value = numericUpDownValue;
-                comboBox1.SelectedIndex = comboBoxValue;
-                timer1.Interval = (int)numericUpDownValue * 1000;
-                timer1.Start();
-            }
         }
 
         private void Timer1_Tick(object sender, EventArgs e)
@@ -172,7 +146,10 @@ namespace DID_Player
         private void Button3_Click(object sender, EventArgs e)
         {
             currentIndex = 0;
-            if (listBox1.Items.Count == 0) return;
+            if (listBox1.Items.Count == 0)
+            {
+                MessageBox.Show("먼저 이미지를 리스트에 추가 해 주세요", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
             if (fullScreen == null && pictureBox == null)
             {
                 this.Hide();
@@ -190,7 +167,7 @@ namespace DID_Player
         // 종료
         private void Button4_Click(object sender, EventArgs e)
         {
-            if(DialogResult.Yes == MessageBox.Show("프로그램을 종료 하시겠습니까?", "알림", MessageBoxButtons.YesNo, MessageBoxIcon.Question))
+            if (DialogResult.Yes == MessageBox.Show("프로그램을 종료 하시겠습니까?", "알림", MessageBoxButtons.YesNo, MessageBoxIcon.Question))
             {
                 Close();
             }
@@ -293,7 +270,6 @@ namespace DID_Player
             fullScreen.KeyDown += FullScreen_KeyDown;
 
             pictureBox.MouseClick += PictureBox_LeftClick;
-            pictureBox.MouseClick += PictureBox_RightClick;
 
             timer1.Interval = (int)numericUpDown1.Value * 1000;
             timer1.Start();
@@ -315,15 +291,6 @@ namespace DID_Player
             if (e.Button == MouseButtons.Left)
             {
                 closeFullScreen();
-            }
-        }
-
-        private void PictureBox_RightClick(object sender, MouseEventArgs e)
-        {
-            Cursor.Show();
-            if (e.Button == MouseButtons.Right)
-            {
-                contextMenuStrip1.Show(Cursor.Position);
             }
         }
 
@@ -352,8 +319,8 @@ namespace DID_Player
             }
             else
             {
-                timer1.Start();
                 Cursor.Hide();
+                timer1.Start();
             }
         }
 
